@@ -1,0 +1,17 @@
+{application, gpio_control,
+ [{description, "Manage GPIO states and allow changes"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {mod, {gpio_control_app, []}},
+  {applications,
+   [
+     kernel
+    ,stdlib
+    ,cowboy
+   ]},
+  {env,[]},
+  {modules, []},
+
+  {licenses, ["Apache 2.0"]},
+  {links, []}
+ ]}.
