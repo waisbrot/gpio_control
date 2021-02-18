@@ -79,6 +79,7 @@ read_pin(Pin) ->
     ReadCommand = io_lib:format(
         "python -c '"
         "import RPi.GPIO as g;"
+        "g.setwarnings(False);"
         "g.setmode(g.BCM);"
         "g.setup(~B,g.IN);"
         "print(g.input(~B));"
@@ -93,6 +94,7 @@ write_pin(Pin, Value) ->
     io_lib:format(
         "python -c '"
         "import RPi.GPIO as g;"
+        "g.setwarnings(False);"
         "g.setmode(g.BCM);"
         "g.setup(~B,g.OUT);"
         "g.output(~B, ~B));"
