@@ -53,7 +53,7 @@ handle_info(timeout, State = #state{target=false}) ->
     {noreply, State#state{target = 1}, 0};
 handle_info(timeout, State = #state{target = Pin}) when Pin > ?LAST_PIN ->
     % When we've processed the last pin we can stop
-    {noreply, State#state{mode = write, target = false}, ?CACHE_LIFE};
+    {noreply, State#state{mode = read, target = false}, ?CACHE_LIFE};
 handle_info(timeout, State = #state{mode = read, target = Pin, pins = Pins}) ->
     % Update the cache with this pin's current value
     PinValue = read_pin(Pin),
@@ -75,11 +75,27 @@ code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
 %% internal
-read_pin(_Pin) ->
-    case rand:uniform(2) of
-        1 -> false;
-        2 -> true
-    end.
+read_pin(Pin) ->
+    ReadCommand = io_lib:format(
+        "python -c '"
+        "import RPi.GPIO as g;"
+        "g.setmode(g.BCM);"
+        "g.setup(~B,g.IN);"
+        "print(g.input(~B));"
+        "g.cleanup(~B)'",
+        [Pin, Pin, Pin]),
+    Result = os:cmd(ReadCommand),
+    Stripped = string:trim(Result),
+    {Int, []} = string:to_integer(Stripped),
+    Int.
 
-write_pin(_Pin, _Value) ->
+write_pin(Pin, Value) ->
+    io_lib:format(
+        "python -c '"
+        "import RPi.GPIO as g;"
+        "g.setmode(g.BCM);"
+        "g.setup(~B,g.OUT);"
+        "g.output(~B, ~B));"
+        "g.cleanup(~B)'",
+        [Pin, Pin, Value, Pin]),
     ok.
