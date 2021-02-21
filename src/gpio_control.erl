@@ -5,7 +5,7 @@
 -record(state, {mode, target, pins}).
 -define(LAST_PIN, 40).          % Pins are numbered starting with 1
 -define(CACHE_LIFE, 30000).     % Time to trust our internal cache
--define(UPDATE_DELAY, 100).
+-define(UPDATE_DELAY, 1000).
 -include_lib("kernel/include/logger.hrl").
 
 -export([get_all/0, get/1, set/2]).
@@ -45,7 +45,7 @@ handle_cast({set, Pin, Value}, State) when Pin > 0 andalso Pin =< ?LAST_PIN anda
     NewPins = array:set(Pin - 1, Value, State#state.pins),
     {noreply, State#state{pins=NewPins}};
 handle_cast(Msg, State) ->
-    logger:debug("Ingoring unknown cast ~p", [Msg]),
+    logger:warning("Ingoring unknown cast ~p", [Msg]),
     {noreply, State}.
 
 handle_info(timeout, State = #state{target=false}) ->
@@ -65,7 +65,7 @@ handle_info(timeout, State = #state{mode = write, target = Pin, pins = Pins}) ->
     write_pin(Pin, PinValue),
     {noreply, State#state{target = Pin+1}, ?UPDATE_DELAY};
 handle_info(Msg, State) ->
-    logger:debug("Ignoring unknown message to info ~p", [Msg]),
+    logger:warning("Ignoring unknown message to info ~p", [Msg]),
     {noreply, State}.
 
 terminate(_Reason, _State) ->
@@ -76,6 +76,7 @@ code_change(_OldVsn, State, _Extra) ->
 
 %% internal
 read_pin(Pin) ->
+    logger:notice("Reading pin ~b", [Pin]),
     ReadCommand = io_lib:format(
         "python -c '"
         "import RPi.GPIO as g;"
@@ -87,10 +88,12 @@ read_pin(Pin) ->
         [Pin, Pin, Pin]),
     Result = os:cmd(ReadCommand),
     Stripped = string:trim(Result),
+    logger:notice("Read ~b = ~p", [Pin, Stripped]),
     {Int, []} = string:to_integer(Stripped),
     Int.
 
 write_pin(Pin, Value) ->
+    logger:notice("Writing pin ~b = ~b", [Pin, Value]),
     io_lib:format(
         "python -c '"
         "import RPi.GPIO as g;"
@@ -100,4 +103,5 @@ write_pin(Pin, Value) ->
         "g.output(~B, ~B));"
         "g.cleanup(~B)'",
         [Pin, Pin, Value, Pin]),
+    logger:notice("Wrote ~b = ~b", [Pin, Value]),
     ok.

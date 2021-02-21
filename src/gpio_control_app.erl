@@ -17,6 +17,8 @@ start(_StartType, _StartArgs) ->
         [{port, 8080}],
         #{env => #{dispatch => Dispatch}}
     ),
+    logger:set_application_level(gpio_control, debug),
+    
     gpio_control_sup:start_link().
 
 stop(_State) ->
