@@ -3,8 +3,8 @@
 -export([start_link/0]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 -record(state, {mode, target, pins}).
--define(LAST_PIN, 40).          % Pins are numbered starting with 1
--define(CACHE_LIFE, 30000).     % Time to trust our internal cache
+-define(LAST_PIN, 30).          % Pins are numbered starting with 1
+-define(CACHE_LIFE, 60000).     % Time to trust our internal cache
 -define(UPDATE_DELAY, 1000).
 -include_lib("kernel/include/logger.hrl").
 
