@@ -5,7 +5,7 @@
 -record(state, {mode, target, pins}).
 -define(LAST_PIN, 30).          % Pins are numbered starting with 1
 -define(CACHE_LIFE, 60000).     % Time to trust our internal cache
--define(UPDATE_DELAY, 1000).
+-define(UPDATE_DELAY, 200).
 -include_lib("kernel/include/logger.hrl").
 
 -export([get_all/0, get/1, set/2]).
@@ -17,7 +17,7 @@ get_all() ->
 get(Pin) when Pin > 0 andalso Pin =< ?LAST_PIN ->
     {ok, Value} = gen_server:call(?MODULE, {get, Pin}, 1000),
     Value.
-set(Pin, Value) when (Pin > 0 andalso Pin =< ?LAST_PIN) andalso (Value == true orelse Value == false) ->
+set(Pin, Value) when (Pin > 0 andalso Pin =< ?LAST_PIN) andalso (Value == 1 orelse Value == 0) ->
     gen_server:cast(?MODULE, {set, Pin, Value}),
     ok.
 
