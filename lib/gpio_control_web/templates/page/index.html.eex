@@ -1,0 +1,13 @@
+<section class="phx-hero">
+  <h1>GPIO Pins</h1>
+  <form id="pin">
+  <table>
+    <%= for bcm <- 1..40 |> Enum.chunk_every(2) do %>
+      <tr>
+        <%= render("pin.html", pin: List.first(bcm)) %>
+        <%= render("pin.html", pin: List.last(bcm)) %>
+      </tr>
+    <% end %>
+  </table>
+  </form>
+</section>

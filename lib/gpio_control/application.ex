@@ -7,13 +7,27 @@ defmodule GpioControl.Application do
 
   def start(_type, _args) do
     children = [
-      # Starts a worker by calling: GpioControl.Worker.start_link(arg)
+      # Start the Telemetry supervisor
+      GpioControlWeb.Telemetry
+      # Start the PubSub syste
+      ,{Phoenix.PubSub, name: GpioControl.PubSub}
+      # Start the Endpoint (http/https)
+      ,GpioControlWeb.Endpoint
+      # Start a worker by calling: GpioControl.Worker.start_link(arg)
       # {GpioControl.Worker, arg}
+      ,GpioControl.Pins
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: GpioControl.Supervisor]
     Supervisor.start_link(children, opts)
+  end
+
+  # Tell Phoenix to update the endpoint configuration
+  # whenever the application is updated.
+  def config_change(changed, _new, removed) do
+    GpioControlWeb.Endpoint.config_change(changed, removed)
+    :ok
   end
 end

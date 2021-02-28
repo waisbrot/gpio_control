@@ -1,0 +1,5 @@
+<td>
+<button name="<%= @pin %>" value="true">
+<%= @pin %>
+</button>
+</td>
