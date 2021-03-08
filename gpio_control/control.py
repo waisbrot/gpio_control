@@ -16,14 +16,14 @@ class LockingIter:
 
     def next(self):
         with self.lock:
-            return self.it.next()
+            return next(self.it)
 def generator_with_locking(f):
     return lambda *args, **kwargs: LockingIter(f(*args, **kwargs))
 
 class PowerSupply(DigitalOutputDevice):
     pass
 
-class SoftButton(ValuesMixin):
+class SoftButton:
     def __init__(self, base=False) -> None:
         self.base = base
         self.value = base
@@ -65,7 +65,7 @@ class Control(Thread):
         super().__init__(group=None, name='device control', daemon=False)
 
     def run(self) -> None:
-        meta_button = any_values(toggled(button), virtual_button)
+        meta_button = any_values(toggled(button), virtual_button.values)
         debounced = post_delayed(meta_button, 3)
         led.source = inverted(debounced)
         power.source = debounced
