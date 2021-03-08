@@ -2,8 +2,23 @@ from gpiozero.tools import _normalize, inverted, any_values, post_delayed
 from gpiozero import LED, Button
 from gpiozero.output_devices import DigitalOutputDevice
 from gpiozero.mixins import ValuesMixin
-from threading import Thread
+from threading import Thread, Lock
 from signal import pause
+from time import time
+
+class LockingIter:
+    def __init__(self, it):
+        self.it = it
+        self.lock = Lock()
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        with self.lock:
+            return self.it.next()
+def generator_with_locking(f):
+    return lambda *args, **kwargs: LockingIter(f(*args, **kwargs))
 
 class PowerSupply(DigitalOutputDevice):
     pass
@@ -12,16 +27,21 @@ class SoftButton(ValuesMixin):
     def __init__(self, base=False) -> None:
         self.base = base
         self.value = base
+        self.pushtimeout = 0
+        self.lock = Lock()
 
     @property
+    @generator_with_locking
     def values(self):
         while True:
             yield self.value
             if self.value != self.base:
-                self.value = self.base
+                if time.time() > self.pushtime:
+                    self.value = self.base
 
-    def click(self):
+    def click(self, pushtime=0.01):
         self.value = not self.base
+        self.pushtime = pushtime + time.time()
 
 
 button = Button(15)
