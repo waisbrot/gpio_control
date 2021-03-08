@@ -4,7 +4,7 @@
     </head>
     <body>
         <form>
-            <h1>Power is {% if led.is_active %}ON{% else %}OFF{% endif %}</h1>
+            <h1>Power is {% if power.is_active %}ON{% else %}OFF{% endif %}</h1>
             <button formmethod="POST" formaction="/push"><h1>Push</h1></button>
         </form>
     </body>
