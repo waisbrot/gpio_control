@@ -43,12 +43,6 @@ class SoftButton:
         self.value = not self.base
         self.pushtime = pushtime + time.time()
 
-@generator_with_locking
-def threadsafe(values):
-    for v in values:
-        yield v
-
-
 button = Button(15)
 virtual_button = SoftButton()
 led = LED(14)
@@ -69,10 +63,12 @@ class Control(Thread):
     def __init__(self) -> None:
         super().__init__(group=None, name='device control', daemon=False)
 
-    def run(self) -> None:
+    def _button_value(self):
         meta_button = any_values(toggled(button), virtual_button.values)
         debounced = post_delayed(meta_button, 3)
-        shared = threadsafe(debounced)
-        led.source = inverted(shared)
-        power.source = shared
+        return debounced
+
+    def run(self) -> None:
+        led.source = inverted(self._button_value())
+        power.source = self._button_value()
         pause()
