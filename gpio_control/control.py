@@ -1,4 +1,4 @@
-from gpiozero.tools import _normalize, inverted, any_values, post_delayed
+from gpiozero.tools import _normalize, inverted, any_values, pre_delayed
 from gpiozero import LED, Button
 from gpiozero.output_devices import DigitalOutputDevice
 from gpiozero.mixins import ValuesMixin
@@ -65,7 +65,7 @@ class Control(Thread):
 
     def _button_value(self):
         meta_button = any_values(toggled(button), virtual_button.values)
-        debounced = post_delayed(meta_button, 3)
+        debounced = pre_delayed(meta_button, 3)
         return debounced
 
     def run(self) -> None:
