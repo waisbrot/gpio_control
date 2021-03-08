@@ -14,7 +14,7 @@ class LockingIter:
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         with self.lock:
             return next(self.it)
 def generator_with_locking(f):
