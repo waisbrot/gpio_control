@@ -59,13 +59,25 @@ def toggled(values):
             previous = v
         yield value
 
+def post_debounced(values, delay=0.1):
+    '''Propagate a change, but they ignore further changes for a little while'''
+    ignore_until = 0
+    previous = next(values)
+    for v in values:
+        if v != previous and time() > ignore_until:
+            yield v
+            previous = v
+            ignore_until = time() + delay
+        else:
+            yield previous
+
 class Control(Thread):
     def __init__(self) -> None:
         super().__init__(group=None, name='device control', daemon=False)
 
     def _button_value(self):
         meta_button = any_values(toggled(button), virtual_button.values)
-        debounced = pre_delayed(meta_button, 3)
+        debounced = post_debounced(meta_button, delay=3)
         return debounced
 
     def run(self) -> None:
