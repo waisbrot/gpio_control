@@ -1,50 +1,35 @@
-from gpiozero.tools import _normalize, inverted, any_values, pre_delayed
+from gpiozero.tools import _normalize, inverted, any_values
 from gpiozero import LED, Button
 from gpiozero.output_devices import DigitalOutputDevice
-from gpiozero.mixins import ValuesMixin
 from threading import Thread, Lock
 from signal import pause
 from time import time
 
-class LockingIter:
-    def __init__(self, it):
-        self.it = it
+class PowerSupply(DigitalOutputDevice):
+    pass
+
+class SoftSwitch:
+    def __init__(self, start=False) -> None:
+        self.value = start
         self.lock = Lock()
 
     def __iter__(self):
         return self
 
-    def __next__(self):
+    def __next__(self) -> bool:
         with self.lock:
-            return next(self.it)
-def generator_with_locking(f):
-    return lambda *args, **kwargs: LockingIter(f(*args, **kwargs))
+            return self.value
 
-class PowerSupply(DigitalOutputDevice):
-    pass
+    def toggle(self) -> None:
+        with self.lock:
+            self.value = not self.value
 
-class SoftButton:
-    def __init__(self, base=False) -> None:
-        self.base = base
-        self.value = base
-        self.pushtimeout = 0
-        self.lock = Lock()
-
-    @property
-    @generator_with_locking
-    def values(self):
-        while True:
-            yield self.value
-            if self.value != self.base:
-                if time.time() > self.pushtime:
-                    self.value = self.base
-
-    def click(self, pushtime=0.01):
-        self.value = not self.base
-        self.pushtime = pushtime + time.time()
+    def set(self, value: bool) -> None:
+        with self.lock:
+            self.value = value
 
 button = Button(15)
-virtual_button = SoftButton()
+virtual_switch = SoftSwitch()
 led = LED(14)
 power = PowerSupply(18)
 
@@ -76,11 +61,11 @@ class Control(Thread):
         super().__init__(group=None, name='device control', daemon=False)
 
     def _button_value(self):
-        meta_button = any_values(toggled(button), virtual_button.values)
+        meta_button = any_values(toggled(button), virtual_switch)
         debounced = post_debounced(meta_button, delay=3)
         return debounced
 
     def run(self) -> None:
-        led.source = inverted(self._button_value())
         power.source = self._button_value()
+        led.source = inverted(power)
         pause()

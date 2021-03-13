@@ -1,7 +1,7 @@
 from http.server import BaseHTTPRequestHandler
 import jinja2
 import logging
-from gpio_control.control import power, virtual_button
+from gpio_control.control import power, virtual_switch
 
 log = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class HTTPRequestHandler (BaseHTTPRequestHandler):
         self.close_connection = True
 
     def do_POST(self):
-        virtual_button.click()
+        virtual_switch.toggle()
         self.send_response(302)
         self.send_header("Content-Lenghth", 0)
         self.send_header("Location", "/")
