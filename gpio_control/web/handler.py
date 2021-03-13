@@ -13,7 +13,18 @@ class HTTPRequestHandler (BaseHTTPRequestHandler):
         self.end_headers()
         self.close_connection = True
 
-    def do_GET(self):
+    def _json_switch_value(self):
+        template = self.tenv.get_template("switch.json")
+        message = template.render(power=power)
+        message = bytes(message, 'utf8')
+        self.send_response(200)
+        self.send_header("Content-Length", len(message))
+        self.send_header("Content-Type", "application/json; charset=UTF-8")
+        self.end_headers()
+        self.wfile.write(message)
+        self.close_connection = True
+
+    def _html_switch_value(self):
         template = self.tenv.get_template("index.html")
         message = template.render(power=power)
         message = bytes(message, 'utf8')
@@ -24,10 +35,21 @@ class HTTPRequestHandler (BaseHTTPRequestHandler):
         self.wfile.write(message)
         self.close_connection = True
 
+    def do_GET(self):
+        if self.headers.get("Accept") == "application/json":
+            return self._json_switch_value()
+        else:
+            return self._html_switch_value()
+
     def do_POST(self):
-        virtual_switch.toggle()
-        self.send_response(302)
-        self.send_header("Content-Lenghth", 0)
-        self.send_header("Location", "/")
-        self.end_headers()
-        self.close_connection = True
+        value = self.rfile.read().lower().startswith('true'):
+        log.debug("Setting soft-switch to %s", value)
+        virtual_switch.set(value)
+        if self.headers.get("Accept") == "application/json":
+            return self._json_switch_value()
+        else:
+            self.send_response(302)
+            self.send_header("Content-Lenghth", 0)
+            self.send_header("Location", "/")
+            self.end_headers()
+            self.close_connection = True
