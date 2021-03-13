@@ -42,7 +42,7 @@ class HTTPRequestHandler (BaseHTTPRequestHandler):
             return self._html_switch_value()
 
     def do_POST(self):
-        value = self.rfile.read().lower().startswith('true'):
+        value = self.rfile.read().lower().startswith('true')
         log.debug("Setting soft-switch to %s", value)
         virtual_switch.set(value)
         if self.headers.get("Accept") == "application/json":
