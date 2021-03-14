@@ -79,7 +79,7 @@ class Control(Thread):
             else:
                 log.debug(f'ignoring button because timeout is not past')
 
+        button.when_deactivated = button_released
+        button.when_activated = lambda: log.debug('button pressed')
         led.source = inverted(power)
-        button.when_released = button_released
-        button.when_pressed = lambda: log.debug('button pressed')
         pause()
