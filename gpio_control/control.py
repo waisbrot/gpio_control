@@ -73,5 +73,5 @@ class Control(Thread):
                 button_delay = time() + 3
 
         led.source = inverted(power)
-        power.when_released = button_released
+        button.when_released = button_released
         pause()
