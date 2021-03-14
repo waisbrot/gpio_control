@@ -66,6 +66,12 @@ class Control(Thread):
         return debounced
 
     def run(self) -> None:
-        power.source = self._button_value()
+        button_delay = time()
+        def button_released():
+            if time() > button_delay:
+                power.toggle()
+                button_delay = time() + 3
+
         led.source = inverted(power)
+        power.when_released = button_released
         pause()
