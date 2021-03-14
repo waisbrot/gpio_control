@@ -50,7 +50,7 @@ class HTTPRequestHandler (BaseHTTPRequestHandler):
         self.rfile.close()
         value = body.decode('utf8').lower().startswith('true')
         log.debug("Setting soft-switch to %s", value)
-        power.set(value)
+        power.value(value)
         sleep(0.5)
         if self.headers.get("Accept") == "application/json":
             return self._json_switch_value()

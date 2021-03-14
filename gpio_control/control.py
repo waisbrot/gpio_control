@@ -71,6 +71,7 @@ class Control(Thread):
     def run(self) -> None:
         button_delay = time()
         def button_released():
+            log.debug(f'button released')
             if time() > button_delay:
                 log.debug(f'Button toggled')
                 power.toggle()
@@ -80,4 +81,5 @@ class Control(Thread):
 
         led.source = inverted(power)
         button.when_released = button_released
+        button.when_pressed = lambda: log.debug('button pressed')
         pause()
