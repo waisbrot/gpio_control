@@ -37,12 +37,14 @@ class HTTPRequestHandler (BaseHTTPRequestHandler):
         self.close_connection = True
 
     def do_GET(self):
+        log.debug('do_GET')
         if self.headers.get("Accept") == "application/json":
             return self._json_switch_value()
         else:
             return self._html_switch_value()
 
     def do_POST(self):
+        log.debug('do_POST')
         content_length = int(self.headers['Content-Length'])
         body = self.rfile.read(content_length)
         self.rfile.close()

@@ -4,6 +4,9 @@ from gpiozero.output_devices import DigitalOutputDevice
 from threading import Thread, Lock
 from signal import pause
 from time import time
+import logging
+
+log = logging.getLogger(__name__)
 
 class PowerSupply(DigitalOutputDevice):
     pass
@@ -69,8 +72,11 @@ class Control(Thread):
         button_delay = time()
         def button_released():
             if time() > button_delay:
+                log.debug(f'Button toggled')
                 power.toggle()
                 button_delay = time() + 3
+            else:
+                log.debug(f'ignoring button because timeout is not past')
 
         led.source = inverted(power)
         button.when_released = button_released
