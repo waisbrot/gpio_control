@@ -3,7 +3,7 @@ from gpiozero import LED, Button
 from gpiozero.output_devices import DigitalOutputDevice
 from threading import Thread, Lock
 from signal import SIG_IGN, pause
-from time import time
+from time import CLOCK_THREAD_CPUTIME_ID, time
 import logging
 
 log = logging.getLogger(__name__)
@@ -70,15 +70,19 @@ def either_changed(values1, values2):
     prev2 = None
     value = False
     for (v1,v2) in zip(values1, values2):
+        diff = False
         if v1 != prev1:
             prev1 = v1
             log.debug(f'either_changed: v1 changed: {value} -> {v1}')
             value = v1
+            diff = True
         if v2 != prev2:
             prev2 = v2
             log.debug(f'either_changed: v2 changed: {value} -> {v2}')
             value = v2
-        log.debug(f'either_changed: output {value}')
+            diff = True
+        if diff:
+            log.debug(f'either_changed: output {value}')
         yield value
 
 class Control(Thread):
