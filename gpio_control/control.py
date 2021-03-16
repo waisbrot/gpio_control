@@ -59,14 +59,22 @@ def post_debounced(values, delay=0.1):
         else:
             yield previous
 
+def either_changed(values1, values2):
+    prev1 = None
+    prev2 = None
+    value = False
+    for (v1,v2) in zip(values1, values2):
+        if v1 != prev1:
+            prev1 = v1
+            value = v1
+        if v2 != prev2:
+            prev2 = v2
+            value = v2
+        yield value
+
 class Control(Thread):
     def __init__(self) -> None:
         super().__init__(group=None, name='device control', daemon=False)
-
-    def _button_value(self):
-        meta_button = any_values(toggled(button), virtual_switch)
-        debounced = post_debounced(meta_button, delay=3)
-        return debounced
 
     def run(self) -> None:
         button_delay = time()
@@ -79,7 +87,8 @@ class Control(Thread):
             else:
                 log.debug(f'ignoring button because timeout is not past')
 
-        button.when_deactivated = button_released
-        button.when_activated = lambda: log.debug('button pressed')
+        meta_button = toggled(button)
+        debounced_button = post_debounced(meta_button, delay=3)
+        power.source = either_changed(debounced_button, virtual_switch)
         led.source = inverted(power)
         pause()
