@@ -2,7 +2,7 @@ from gpiozero.tools import _normalize, inverted, any_values
 from gpiozero import LED, Button
 from gpiozero.output_devices import DigitalOutputDevice
 from threading import Thread, Lock
-from signal import pause
+from signal import SIG_IGN, pause
 from time import time
 import logging
 
@@ -36,14 +36,20 @@ virtual_switch = SoftSwitch()
 led = LED(14)
 power = PowerSupply(18)
 
-def toggled(values):
+def debounced_toggled(values, delay):
     values = _normalize(values)
     previous = 0
     value = 0
+    ignore_until = 0
     for v in values:
         if v != previous:
             if v == 0:  # press and release
-                value ^= 1
+                if time() > ignore_until:
+                    value ^= 1
+                    log.debug(f"debounced_toggled: ignore time is past; toggling to {value}")
+                    ignore_until = time() + delay
+                else:
+                    log.debug(f"debounced_toggled: this would be a toggle, but ignore time is not past. stay at {value}")
             previous = v
         yield value
 
@@ -66,10 +72,13 @@ def either_changed(values1, values2):
     for (v1,v2) in zip(values1, values2):
         if v1 != prev1:
             prev1 = v1
+            log.debug(f'either_changed: v1 changed: {value} -> {v1}')
             value = v1
         if v2 != prev2:
             prev2 = v2
+            log.debug(f'either_changed: v2 changed: {value} -> {v2}')
             value = v2
+        log.debug(f'either_changed: output {value}')
         yield value
 
 class Control(Thread):
@@ -77,18 +86,7 @@ class Control(Thread):
         super().__init__(group=None, name='device control', daemon=False)
 
     def run(self) -> None:
-        button_delay = time()
-        def button_released():
-            log.debug(f'button released')
-            if time() > button_delay:
-                log.debug(f'Button toggled')
-                power.toggle()
-                button_delay = time() + 3
-            else:
-                log.debug(f'ignoring button because timeout is not past')
-
-        meta_button = toggled(button)
-        debounced_button = post_debounced(meta_button, delay=3)
+        debounced_button = debounced_toggled(button, delay=3)
         power.source = either_changed(debounced_button, virtual_switch)
         led.source = inverted(power)
         pause()
