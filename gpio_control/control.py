@@ -11,30 +11,41 @@ log = logging.getLogger(__name__)
 class PowerSupply(DigitalOutputDevice):
     pass
 
-class SoftSwitch:
-    def __init__(self, start=False) -> None:
-        self.value = start
+class SoftButton:
+    def __init__(self) -> None:
+        self.value = False
         self.lock = Lock()
+        self.unpress = 0
+        self.push_s = 0.5
 
     def __iter__(self):
         return self
 
     def __next__(self) -> bool:
         with self.lock:
+            if self.unpress > time():
+                self.value = False
             return self.value
 
-    def toggle(self) -> None:
+    def push(self) -> None:
         with self.lock:
-            self.value = not self.value
+            self.value = True
+            self.unpress = time() + self.push_s
 
     def set(self, value: bool) -> None:
         with self.lock:
-            self.value = value
+            if self.value != value:
+                self.push()
 
 button = Button(15)
-virtual_switch = SoftSwitch()
+virtual_button = SoftButton()
 led = LED(14)
 power = PowerSupply(18)
+
+def melded(values1, values2):
+    for (v1,v2) in zip(values1, values2):
+        yield v1
+        yield v2
 
 def debounced_toggled(values, delay):
     values = _normalize(values)
@@ -90,7 +101,7 @@ class Control(Thread):
         super().__init__(group=None, name='device control', daemon=False)
 
     def run(self) -> None:
-        debounced_button = debounced_toggled(button, delay=3)
-        power.source = either_changed(debounced_button, virtual_switch)
+        debounced_button = debounced_toggled(melded(button.values, virtual_button), delay=3)
+        power.source = debounced_button
         led.source = inverted(power)
         pause()

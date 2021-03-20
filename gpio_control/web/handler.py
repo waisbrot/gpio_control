@@ -1,7 +1,7 @@
 from http.server import BaseHTTPRequestHandler
 import jinja2
 import logging
-from gpio_control.control import power
+from gpio_control.control import power, virtual_switch
 from time import sleep
 
 log = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ class HTTPRequestHandler (BaseHTTPRequestHandler):
         self.rfile.close()
         value = body.decode('utf8').lower().startswith('true')
         log.debug("Setting soft-switch to %s", value)
-        power.value = value
+        virtual_switch.set(value)
         sleep(0.5)
         if self.headers.get("Accept") == "application/json":
             return self._json_switch_value()
