@@ -24,7 +24,7 @@ class SoftButton:
 
     def __next__(self) -> bool:
         with self.lock:
-            if self.unpress > time():
+            if self.value and self.unpress > time():
                 log.debug(f'{self} Unpress soft-button')
                 self.value = False
             return self.value
