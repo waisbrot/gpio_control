@@ -31,15 +31,18 @@ class SoftButton:
 
     def push(self) -> None:
         with self.lock:
-            log.debug(f'{self} Pressed soft-button')
-            self.value = True
-            self.unpress = time() + self.push_s
+            self._push()
+
+    def _push(self) -> None:
+        log.debug(f'{self} Pressed soft-button')
+        self.value = True
+        self.unpress = time() + self.push_s
 
     def set(self, value: bool) -> None:
         with self.lock:
             if self.value != value:
                 log.debug(f'{self} set soft-button to {value}')
-                self.push()
+                self._push()
             else:
                 log.debug(f'{self} soft-button already set to {value}')
 
