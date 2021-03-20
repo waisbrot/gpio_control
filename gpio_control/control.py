@@ -17,6 +17,7 @@ class SoftButton:
         self.lock = Lock()
         self.unpress = 0
         self.push_s = 0.5
+        log.debug(f'{self} new soft-button')
 
     def __iter__(self):
         return self
@@ -24,18 +25,23 @@ class SoftButton:
     def __next__(self) -> bool:
         with self.lock:
             if self.unpress > time():
+                log.debug(f'{self} Unpress soft-button')
                 self.value = False
             return self.value
 
     def push(self) -> None:
         with self.lock:
+            log.debug(f'{self} Pressed soft-button')
             self.value = True
             self.unpress = time() + self.push_s
 
     def set(self, value: bool) -> None:
         with self.lock:
             if self.value != value:
+                log.debug(f'{self} set soft-button to {value}')
                 self.push()
+            else:
+                log.debug(f'{self} soft-button already set to {value}')
 
 button = Button(15)
 virtual_button = SoftButton()
