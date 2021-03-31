@@ -1,7 +1,7 @@
 import argparse
 from gpio_control.control import Control
-#from gpio_control.pins.thread import PinThread
 from gpio_control.web.server import Server
+from gpio_control.temperature import Temperature
 from threading import Thread
 from time import sleep
 import logging
@@ -37,6 +37,9 @@ def run():
 
     control = Control()
     control.start()
+
+    temp = Temperature()
+    temp.start()
 
 #print("started")
 
