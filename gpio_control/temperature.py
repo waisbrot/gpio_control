@@ -14,22 +14,31 @@ class Temperature(Thread):
     def __init__(self) -> None:
         super().__init__(group=None, name='temperature measure', daemon=False)
         self._bucket = os.getenv('INFLUX_BUCKET')
-        org = os.getenv('INFLUX_ORG')
-        token = os.getenv('INFLUX_TOKEN')
-        url = os.getenv("INFLUX_URL")
+        self._org = os.getenv('INFLUX_ORG')
+        self._token = os.getenv('INFLUX_TOKEN')
+        self._url = os.getenv("INFLUX_URL")
         self._hostname = gethostname()
-        log.debug("Initializing Influx client")
-        client = InfluxDBClient(url=url, token=token, org=org)
-        self.write_influx = client.write_api(write_options=SYNCHRONOUS)
 
     def run(self) -> None:
-        log.debug("Initializing temp sensor")
-        sensor = adafruit_si7021.SI7021(board.I2C())
+        sensor = None
+        influx = None
         while True:
+            if not sensor:
+                log.debug("Initializing temp sensor")
+                sensor = adafruit_si7021.SI7021(board.I2C())
+            if not influx:
+                log.debug("Initializing Influx client")
+                client = InfluxDBClient(url=self._url, token=self._token, org=self._org)
+                influx = client.write_api(write_options=SYNCHRONOUS)
+
             metrics = [
                 f'temperature,host={self._hostname} degrees_c={sensor.temperature}',
                 f'humidity,host={self._hostname} humidity_pct={sensor.relative_humidity}',
             ]
             log.debug(f"Going to write to influx: {metrics}")
-            self.write_influx.write(bucket=self._bucket, record=metrics)
+            try:
+                influx.write(bucket=self._bucket, record=metrics)
+            except:
+                log.error("Failed to write to Influx. Will try to reconnect next time.")
+                influx = None
             sleep(10)
